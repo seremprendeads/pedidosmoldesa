@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vista de Tareas - Jefe</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 min-h-screen flex flex-col">
+
+  <header class="bg-blue-600 text-white py-6 text-center">
+    <h1 class="text-3xl font-bold">Vista de Tareas</h1>
+  </header>
+
+  <main class="flex-1 p-6 max-w-4xl mx-auto w-full">
+    <ul id="task-list" class="space-y-6">
+      <!-- Las tareas se cargarán aquí -->
+    </ul>
+  </main>
+
+  <script>
+    const taskList = document.getElementById('task-list');
+
+    function loadTasks() {
+      const saved = localStorage.getItem('tasks');
+      if (saved) {
+        JSON.parse(saved).forEach(task => addTask(task.text, task.status));
+      }
+    }
+
+    function addTask(text, status) {
+      const li = document.createElement('li');
+      li.className = "bg-white p-4 rounded shadow space-y-4";
+
+      const taskTop = document.createElement('div');
+      taskTop.className = "flex justify-between items-center";
+
+      const span = document.createElement('span');
+      span.textContent = text;
+      span.className = "flex-1 font-semibold";
+
+      const statusLabel = document.createElement('span');
+      statusLabel.textContent = status;
+      statusLabel.className = "ml-4 text-sm font-bold";
+
+      const progressContainer = document.createElement('div');
+      progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
+
+      const progressBar = document.createElement('div');
+      progressBar.className = "h-full transition-all duration-500";
+      updateTaskProgress(progressBar, status);
+      progressContainer.appendChild(progressBar);
+
+      taskTop.appendChild(span);
+      taskTop.appendChild(statusLabel);
+
+      li.appendChild(taskTop);
+      li.appendChild(progressContainer);
+      taskList.appendChild(li);
+    }
+
+    function updateTaskProgress(progressBar, status) {
+      switch(status) {
+        case 'Pendiente':
+          progressBar.style.width = '10%';
+          progressBar.className += ' bg-gray-400';
+          break;
+        case 'Haciendo':
+          progressBar.style.width = '50%';
+          progressBar.className += ' bg-blue-500';
+          break;
+        case 'Pausado':
+          progressBar.style.width = '50%';
+          progressBar.className += ' bg-yellow-400';
+          break;
+        case 'Terminado':
+          progressBar.style.width = '100%';
+          progressBar.className += ' bg-green-500';
+          break;
+      }
+    }
+
+    loadTasks();
+  </script>
+
+</body>
+</html>
