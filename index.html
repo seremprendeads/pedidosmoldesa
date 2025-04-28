@@ -3,6 +3,138 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>To-Do List con Barra de Progreso</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 min-h-screen flex flex-col">
+
+  <header class="bg-blue-600 text-white py-6 text-center">
+    <h1 class="text-3xl font-bold">To-Do List</h1>
+  </header>
+
+  <main class="flex-1 p-6 max-w-4xl mx-auto w-full">
+    <form id="task-form" class="flex flex-col sm:flex-row gap-4 mb-6">
+      <input
+        type="text"
+        id="task-input"
+        placeholder="Escribe una tarea..."
+        required
+        class="flex-1 p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+      >
+      <button
+        type="submit"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold p-3 rounded transition"
+      >
+        Agregar
+      </button>
+    </form>
+
+    <ul id="task-list" class="space-y-6">
+      <!-- Las tareas aparecerán aquí -->
+    </ul>
+  </main>
+
+  <script>
+    const taskForm = document.getElementById('task-form');
+const taskInput = document.getElementById('task-input');
+const taskList = document.getElementById('task-list');
+
+taskForm.addEventListener('submit', function(event) {
+  event.preventDefault();
+
+  const taskText = taskInput.value.trim();
+  if (taskText !== '') {
+    addTask(taskText);
+    taskInput.value = '';
+    taskInput.focus();
+  }
+});
+
+function addTask(text) {
+  const li = document.createElement('li');
+  li.className = "bg-white p-4 rounded shadow space-y-4";
+
+  const taskTop = document.createElement('div');
+  taskTop.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
+
+  const span = document.createElement('span');
+  span.textContent = text;
+  span.className = "flex-1 font-semibold cursor-pointer";
+
+  span.addEventListener('click', function() {
+    span.classList.toggle('line-through');
+    span.classList.toggle('text-gray-400');
+  });
+
+  const select = document.createElement('select');
+  select.className = "p-2 rounded border border-gray-300 focus:outline-none";
+
+  const options = ['Pendiente', 'Haciendo', 'Pausado', 'Terminado'];
+  options.forEach(optionText => {
+    const option = document.createElement('option');
+    option.value = optionText;
+    option.textContent = optionText;
+    select.appendChild(option);
+  });
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = 'Borrar';
+  deleteBtn.className = 'bg-red-500 hover:bg-red-600 text-white p-2 rounded transition';
+
+  deleteBtn.addEventListener('click', function(event) {
+    event.stopPropagation();
+    taskList.removeChild(li);
+  });
+
+  const progressContainer = document.createElement('div');
+  progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
+
+  const progressBar = document.createElement('div');
+  progressBar.className = "h-full bg-gray-400 transition-all duration-500";
+  progressContainer.appendChild(progressBar);
+
+  select.addEventListener('change', function() {
+    updateTaskProgress(progressBar, select.value);
+  });
+
+  taskTop.appendChild(span);
+  taskTop.appendChild(select);
+  taskTop.appendChild(deleteBtn);
+
+  li.appendChild(taskTop);
+  li.appendChild(progressContainer);
+  taskList.appendChild(li);
+}
+
+function updateTaskProgress(progressBar, status) {
+  switch(status) {
+    case 'Pendiente':
+      progressBar.style.width = '10%';
+      progressBar.className = 'h-full bg-gray-400 transition-all duration-500';
+      break;
+    case 'Haciendo':
+      progressBar.style.width = '50%';
+      progressBar.className = 'h-full bg-blue-500 transition-all duration-500';
+      break;
+    case 'Pausado':
+      progressBar.style.width = '50%';
+      progressBar.className = 'h-full bg-yellow-400 transition-all duration-500';
+      break;
+    case 'Terminado':
+      progressBar.style.width = '100%';
+      progressBar.className = 'h-full bg-green-500 transition-all duration-500';
+      break;
+  }
+}
+
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Todo Lista - Tareas Generales</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
