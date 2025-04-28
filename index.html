@@ -36,118 +36,122 @@
 
   <script>
     const taskForm = document.getElementById('task-form');
-const taskInput = document.getElementById('task-input');
-const taskList = document.getElementById('task-list');
-
-taskForm.addEventListener('submit', function(event) {
-  event.preventDefault();
-
-  const taskText = taskInput.value.trim();
-  if (taskText !== '') {
-    addTask(taskText);
-    taskInput.value = '';
-    taskInput.focus();
-  }
-});
-
-function addTask(text) {
-  const li = document.createElement('li');
-  li.className = "bg-white p-4 rounded shadow space-y-4";
-
-  const taskTop = document.createElement('div');
-  taskTop.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
-
-  const span = document.createElement('span');
-  span.textContent = text;
-  span.className = "flex-1 font-semibold cursor-pointer";
-
-  span.addEventListener('click', function() {
-    span.classList.toggle('line-through');
-    span.classList.toggle('text-gray-400');
-  });
-
-  const select = document.createElement('select');
-  select.className = "p-2 rounded border border-gray-300 focus:outline-none";
-
-  const options = ['Pendiente', 'Haciendo', 'Pausado', 'Terminado'];
-  options.forEach(optionText => {
-    const option = document.createElement('option');
-    option.value = optionText;
-    option.textContent = optionText;
-    select.appendChild(option);
-  });
-
-  const deleteBtn = document.createElement('button');
-  deleteBtn.textContent = 'Borrar';
-  deleteBtn.className = 'bg-red-500 hover:bg-red-600 text-white p-2 rounded transition';
-
-  deleteBtn.addEventListener('click', function(event) {
-    event.stopPropagation();
-    taskList.removeChild(li);
-  });
-
-  const progressContainer = document.createElement('div');
-  progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
-
-  const progressBar = document.createElement('div');
-  progressBar.className = "h-full bg-gray-400 transition-all duration-500";
-  progressContainer.appendChild(progressBar);
-
-  select.addEventListener('change', function() {
-    updateTaskProgress(progressBar, select.value);
-  });
-
-  taskTop.appendChild(span);
-  taskTop.appendChild(select);
-  taskTop.appendChild(deleteBtn);
-
-  li.appendChild(taskTop);
-  li.appendChild(progressContainer);
-  taskList.appendChild(li);
-}
-
-function updateTaskProgress(progressBar, status) {
-  switch(status) {
-    case 'Pendiente':
-      progressBar.style.width = '10%';
-      progressBar.className = 'h-full bg-gray-400 transition-all duration-500';
-      break;
-    case 'Haciendo':
-      progressBar.style.width = '50%';
-      progressBar.className = 'h-full bg-blue-500 transition-all duration-500';
-      break;
-    case 'Pausado':
-      progressBar.style.width = '50%';
-      progressBar.className = 'h-full bg-yellow-400 transition-all duration-500';
-      break;
-    case 'Terminado':
-      progressBar.style.width = '100%';
-      progressBar.className = 'h-full bg-green-500 transition-all duration-500';
-      break;
-  }
-}
+    const taskInput = document.getElementById('task-input');
+    const taskList = document.getElementById('task-list');
 
     function saveTasks() {
-  const tasks = [];
-  document.querySelectorAll('#task-list li').forEach(li => {
-    const text = li.querySelector('span').textContent;
-    const status = li.querySelector('select').value;
-    tasks.push({ text, status });
-  });
-  localStorage.setItem('tasks', JSON.stringify(tasks));
-}
+      const tasks = [];
+      document.querySelectorAll('#task-list li').forEach(li => {
+        const text = li.querySelector('span').textContent;
+        const status = li.querySelector('select').value;
+        tasks.push({ text, status });
+      });
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
 
-function loadTasks() {
-  const saved = localStorage.getItem('tasks');
-  if (saved) {
-    JSON.parse(saved).forEach(task => addTask(task.text, task.status));
-  }
-}
+    function loadTasks() {
+      const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+      tasks.forEach(task => addTask(task.text, task.status));
+    }
 
-// Cargamos las tareas cuando recarga la página
-loadTasks();
+    taskForm.addEventListener('submit', function(event) {
+      event.preventDefault();
 
+      const taskText = taskInput.value.trim();
+      if (taskText !== '') {
+        addTask(taskText);
+        saveTasks();  // Guardar después de agregar
+        taskInput.value = '';
+        taskInput.focus();
+      }
+    });
 
+    function addTask(text, status = 'Pendiente') {
+      const li = document.createElement('li');
+      li.className = "bg-white p-4 rounded shadow space-y-4";
+
+      const taskTop = document.createElement('div');
+      taskTop.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
+
+      const span = document.createElement('span');
+      span.textContent = text;
+      span.className = "flex-1 font-semibold cursor-pointer";
+
+      span.addEventListener('click', function() {
+        span.classList.toggle('line-through');
+        span.classList.toggle('text-gray-400');
+      });
+
+      const select = document.createElement('select');
+      select.className = "p-2 rounded border border-gray-300 focus:outline-none";
+
+      const options = ['Pendiente', 'Haciendo', 'Pausado', 'Terminado'];
+      options.forEach(optionText => {
+        const option = document.createElement('option');
+        option.value = optionText;
+        option.textContent = optionText;
+        select.appendChild(option);
+      });
+
+      select.value = status;
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Borrar';
+      deleteBtn.className = 'bg-red-500 hover:bg-red-600 text-white p-2 rounded transition';
+
+      deleteBtn.addEventListener('click', function(event) {
+        event.stopPropagation();
+        taskList.removeChild(li);
+        saveTasks();  // Guardar después de borrar
+      });
+
+      const progressContainer = document.createElement('div');
+      progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
+
+      const progressBar = document.createElement('div');
+      progressBar.className = "h-full bg-gray-400 transition-all duration-500";
+      progressContainer.appendChild(progressBar);
+
+      select.addEventListener('change', function() {
+        updateTaskProgress(progressBar, select.value);
+        saveTasks();  // Guardar cuando se cambia el estado
+      });
+
+      updateTaskProgress(progressBar, status);
+
+      taskTop.appendChild(span);
+      taskTop.appendChild(select);
+      taskTop.appendChild(deleteBtn);
+
+      li.appendChild(taskTop);
+      li.appendChild(progressContainer);
+      taskList.appendChild(li);
+    }
+
+    function updateTaskProgress(progressBar, status) {
+      switch(status) {
+        case 'Pendiente':
+          progressBar.style.width = '10%';
+          progressBar.className = 'h-full bg-gray-400 transition-all duration-500';
+          break;
+        case 'Haciendo':
+          progressBar.style.width = '50%';
+          progressBar.className = 'h-full bg-blue-500 transition-all duration-500';
+          break;
+        case 'Pausado':
+          progressBar.style.width = '50%';
+          progressBar.className = 'h-full bg-yellow-400 transition-all duration-500';
+          break;
+        case 'Terminado':
+          progressBar.style.width = '100%';
+          progressBar.className = 'h-full bg-green-500 transition-all duration-500';
+          break;
+      }
+    }
+
+    // Cargar tareas guardadas al iniciar la página
+    loadTasks();
   </script>
+
 </body>
 </html>
