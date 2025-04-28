@@ -127,6 +127,27 @@ function updateTaskProgress(progressBar, status) {
   }
 }
 
+    function saveTasks() {
+  const tasks = [];
+  document.querySelectorAll('#task-list li').forEach(li => {
+    const text = li.querySelector('span').textContent;
+    const status = li.querySelector('select').value;
+    tasks.push({ text, status });
+  });
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function loadTasks() {
+  const saved = localStorage.getItem('tasks');
+  if (saved) {
+    JSON.parse(saved).forEach(task => addTask(task.text, task.status));
+  }
+}
+
+// Cargamos las tareas cuando recarga la página
+loadTasks();
+
+
   </script>
 </body>
 </html>
