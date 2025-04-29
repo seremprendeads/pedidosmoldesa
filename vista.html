@@ -67,33 +67,20 @@ function addTask(text, status = 'Pendiente') {
     span.classList.toggle('text-gray-400');
   });
 
-  const select = document.createElement('select');
-  select.className = "p-2 rounded border border-gray-300 focus:outline-none";
+  // Eliminar el select para mostrar el estado como texto
+  const statusSpan = document.createElement('span');
+  statusSpan.textContent = status;
+  statusSpan.className = "font-semibold text-gray-600";  // Estilo para el estado de la tarea
 
-  const options = ['Pendiente', 'Haciendo', 'Pausado', 'Terminado', 'Enviado'];
-  options.forEach(optionText => {
-    const option = document.createElement('option');
-    option.value = optionText;
-    option.textContent = optionText;
-    select.appendChild(option);
-  });
-
-  // Verifica que el 'status' sea uno de los valores válidos
-  if (!options.includes(status)) {
-    status = 'Pendiente'; // Si 'status' no es válido, asignamos el valor predeterminado
-  }
-
-  select.value = status;
-
-  const deleteBtn = document.createElement('button');
-  deleteBtn.textContent = 'Borrar';
-  deleteBtn.className = 'bg-red-500 hover:bg-red-600 text-white p-2 rounded transition';
-
-  deleteBtn.addEventListener('click', function(event) {
-    event.stopPropagation();
-    taskList.removeChild(li);
-    saveTasks();  // Guardar después de borrar
-  });
+  // Eliminamos el botón de eliminar
+  // const deleteBtn = document.createElement('button');
+  // deleteBtn.textContent = 'Borrar';
+  // deleteBtn.className = 'bg-red-500 hover:bg-red-600 text-white p-2 rounded transition';
+  // deleteBtn.addEventListener('click', function(event) {
+  //   event.stopPropagation();
+  //   taskList.removeChild(li);
+  //   saveTasks();  // Guardar después de borrar
+  // });
 
   const progressContainer = document.createElement('div');
   progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
@@ -102,10 +89,18 @@ function addTask(text, status = 'Pendiente') {
   progressBar.className = "h-full bg-gray-400 transition-all duration-500";
   progressContainer.appendChild(progressBar);
 
-  select.addEventListener('change', function() {
-    updateTaskProgress(progressBar, select.value);
-    saveTasks();  // Guardar cuando se cambia el estado
-  });
+  // Actualizamos el progreso en función del estado
+  updateTaskProgress(progressBar, status);
+
+  taskTop.appendChild(span);
+  taskTop.appendChild(statusSpan);  // Añadimos el estado como texto
+  // taskTop.appendChild(deleteBtn);  // Ya no mostramos el botón de eliminar
+
+  li.appendChild(taskTop);
+  li.appendChild(progressContainer);
+  taskList.appendChild(li);
+}
+
 
   updateTaskProgress(progressBar, status);
 
