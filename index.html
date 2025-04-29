@@ -9,8 +9,7 @@
 <body class="bg-gray-900 min-h-screen flex flex-col">
 
   <header class="bg-blue-600 text-white py-6 text-center">
-    <h1 class="text-3xl font-bold">Pedidos 📦​ </h1>
-   
+    <h1 class="text-3xl font-bold">Pedidos 📦​</h1>
   </header>
 
   <main class="flex-1 p-6 max-w-4xl mx-auto w-full">
@@ -35,6 +34,10 @@
     </ul>
   </main>
 
+  <footer class="bg-gray-800 text-gray-400 text-center py-4">
+    <p class="text-sm">Hecho con ❤️ por Leonardo - 2025</p>
+  </footer>
+
   <script>
     const taskForm = document.getElementById('task-form');
     const taskInput = document.getElementById('task-input');
@@ -43,7 +46,7 @@
     function saveTasks() {
       const tasks = [];
       document.querySelectorAll('#task-list li').forEach(li => {
-        const text = li.querySelector('span').textContent;
+        const text = li.querySelector('span').innerHTML.replace(/<br\s*\/?>/gi, '\n');
         const status = li.querySelector('select').value;
         tasks.push({ text, status });
       });
@@ -55,23 +58,19 @@
       tasks.forEach(task => addTask(task.text, task.status));
     }
 
-    // Manejar el evento de teclas en el textarea
     taskInput.addEventListener('keydown', function(event) {
-      // Si es Ctrl+Enter, enviar el formulario
       if (event.key === 'Enter' && event.ctrlKey) {
         event.preventDefault();
         taskForm.dispatchEvent(new Event('submit'));
       }
-      // Si es solo Enter sin Ctrl, permitir el salto de línea normal
     });
 
     taskForm.addEventListener('submit', function(event) {
       event.preventDefault();
-
       const taskText = taskInput.value.trim();
       if (taskText !== '') {
         addTask(taskText);
-        saveTasks();  // Guardar después de agregar
+        saveTasks();
         taskInput.value = '';
         taskInput.focus();
       }
@@ -85,10 +84,8 @@
       taskTop.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
 
       const span = document.createElement('span');
-      // Preservar saltos de línea en el texto de la tarea
       span.innerHTML = text.replace(/\n/g, '<br>');
       span.className = "flex-1 font-semibold cursor-pointer";
-
       span.addEventListener('click', function() {
         span.classList.toggle('line-through');
         span.classList.toggle('text-gray-400');
@@ -104,29 +101,27 @@
         option.textContent = optionText;
         select.appendChild(option);
       });
-
       select.value = status;
 
       const deleteBtn = document.createElement('button');
       deleteBtn.textContent = 'Borrar';
       deleteBtn.className = 'bg-red-500 hover:bg-red-600 text-white p-2 rounded transition';
-
       deleteBtn.addEventListener('click', function(event) {
         event.stopPropagation();
         taskList.removeChild(li);
-        saveTasks();  // Guardar después de borrar
+        saveTasks();
       });
 
       const progressContainer = document.createElement('div');
       progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
 
       const progressBar = document.createElement('div');
-      progressBar.className = "h-full bg-gray-400 transition-all duration-500";
+      progressBar.className = "h-full transition-all duration-500";
       progressContainer.appendChild(progressBar);
 
       select.addEventListener('change', function() {
         updateTaskProgress(progressBar, select.value);
-        saveTasks();  // Guardar cuando se cambia el estado
+        saveTasks();
       });
 
       updateTaskProgress(progressBar, status);
@@ -165,7 +160,6 @@
       }
     }
 
-    // Cargar tareas guardadas al iniciar la página
     loadTasks();
   </script>
 
