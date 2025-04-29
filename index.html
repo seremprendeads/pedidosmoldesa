@@ -85,7 +85,7 @@
     loginBtn.addEventListener("click", () => {
       signInAnonymously(auth).catch((error) => {
         console.error("Error al iniciar sesión:", error);
-      });
+        });
     });
 
     // Cerrar sesión
@@ -116,65 +116,66 @@
     });
 
     // Renderizar tarea
-    function renderTask(id, text, status = "Pendiente") {
-      const li = document.createElement("li");
-      li.className = "bg-white p-4 rounded shadow space-y-4";
+function renderTask(id, text, status = "Pendiente") {
+  const li = document.createElement("li");
+  li.className = "bg-white p-4 rounded shadow space-y-4";
 
-      const top = document.createElement("div");
-      top.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
+  const top = document.createElement("div");
+  top.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
 
-      const span = document.createElement("span");
-      span.innerHTML = text.replace(/\n/g, "<br>");
-      span.className = "flex-1 font-semibold cursor-pointer";
+  const span = document.createElement("span");
+  span.innerHTML = (text || "").replace(/\n/g, "<br>"); // Aquí es donde aplicas la corrección
+  span.className = "flex-1 font-semibold cursor-pointer";
 
-      span.addEventListener("click", () => {
-        span.classList.toggle("line-through");
-        span.classList.toggle("text-gray-400");
-      });
+  span.addEventListener("click", () => {
+    span.classList.toggle("line-through");
+    span.classList.toggle("text-gray-400");
+  });
 
-      const select = document.createElement("select");
-      select.className = "p-2 rounded border border-gray-300 focus:outline-none";
-      const estados = ["Pendiente", "Haciendo", "Pausado", "Terminado", "Enviado"];
-      estados.forEach((estado) => {
-        const opt = document.createElement("option");
-        opt.value = estado;
-        opt.textContent = estado;
-        select.appendChild(opt);
-      });
-      select.value = status;
+  const select = document.createElement("select");
+  select.className = "p-2 rounded border border-gray-300 focus:outline-none";
+  const estados = ["Pendiente", "Haciendo", "Pausado", "Terminado", "Enviado"];
+  estados.forEach((estado) => {
+    const opt = document.createElement("option");
+    opt.value = estado;
+    opt.textContent = estado;
+    select.appendChild(opt);
+  });
+  select.value = status;
 
-      select.addEventListener("change", async () => {
-        await updateDoc(doc(db, "tareas", id), { status: select.value });
-      });
+  select.addEventListener("change", async () => {
+    await updateDoc(doc(db, "tareas", id), { status: select.value });
+  });
 
-      const borrar = document.createElement("button");
-      borrar.textContent = "Borrar";
-      borrar.className = "bg-red-500 hover:bg-red-600 text-white p-2 rounded transition";
-      borrar.addEventListener("click", async () => {
-        await deleteDoc(doc(db, "tareas", id));
-      });
+  const borrar = document.createElement("button");
+  borrar.textContent = "Borrar";
+  borrar.className = "bg-red-500 hover:bg-red-600 text-white p-2 rounded transition";
+  borrar.addEventListener("click", async () => {
+    await deleteDoc(doc(db, "tareas", id));
+  });
 
-      const progressContainer = document.createElement("div");
-      progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
+  const progressContainer = document.createElement("div");
+  progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
 
-      const progressBar = document.createElement("div");
-      progressBar.className = "h-full transition-all duration-500";
-      progressContainer.appendChild(progressBar);
+  const progressBar = document.createElement("div");
+  progressBar.className = "h-full transition-all duration-500";
+  progressContainer.appendChild(progressBar);
 
-      updateProgress(progressBar, status);
+  updateProgress(progressBar, status);
 
-      select.addEventListener("change", () => {
-        updateProgress(progressBar, select.value);
-      });
+  select.addEventListener("change", () => {
+    updateProgress(progressBar, select.value);
+  });
 
-      top.appendChild(span);
-      top.appendChild(select);
-      top.appendChild(borrar);
+  top.appendChild(span);
+  top.appendChild(select);
+  top.appendChild(borrar);
 
-      li.appendChild(top);
-      li.appendChild(progressContainer);
-      taskList.appendChild(li);
-    }
+  li.appendChild(top);
+  li.appendChild(progressContainer);
+  taskList.appendChild(li);
+}
+
 
     function updateProgress(bar, estado) {
       const estilos = {
