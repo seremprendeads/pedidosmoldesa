@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>To-Do List con Barra de Progreso</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>To-Do List con Firestore</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 min-h-screen flex flex-col">
 
   <header class="bg-blue-600 text-white py-6 text-center">
-    <h1 class="text-3xl font-bold">Pedidos 📦​ </h1>
-   
+    <h1 class="text-3xl font-bold">Pedidos 📦</h1>
   </header>
 
   <main class="flex-1 p-6 max-w-4xl mx-auto w-full">
@@ -31,143 +30,124 @@
     </form>
 
     <ul id="task-list" class="space-y-6">
-      <!-- Las tareas aparecerán aquí -->
+      <!-- Tareas se cargan aquí -->
     </ul>
   </main>
 
-  <script>
-    const taskForm = document.getElementById('task-form');
-    const taskInput = document.getElementById('task-input');
-    const taskList = document.getElementById('task-list');
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    function saveTasks() {
-      const tasks = [];
-      document.querySelectorAll('#task-list li').forEach(li => {
-        const text = li.querySelector('span').textContent;
-        const status = li.querySelector('select').value;
-        tasks.push({ text, status });
-      });
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
+    // Configuración Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyC26tExI2Qzm_dczDvGRx58M_9b4qD3Ajw",
+      authDomain: "tareas-d2893.firebaseapp.com",
+      projectId: "tareas-d2893",
+      storageBucket: "tareas-d2893.firebasestorage.app",
+      messagingSenderId: "930777625775",
+      appId: "1:930777625775:web:347b4c3814d99d163ad05a",
+      measurementId: "G-N1WRTWBEBM"
+    };
 
-    function loadTasks() {
-      const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-      tasks.forEach(task => addTask(task.text, task.status));
-    }
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const tareasRef = collection(db, "tareas");
 
-    // Manejar el evento de teclas en el textarea
-    taskInput.addEventListener('keydown', function(event) {
-      // Si es Ctrl+Enter, enviar el formulario
-      if (event.key === 'Enter' && event.ctrlKey) {
-        event.preventDefault();
-        taskForm.dispatchEvent(new Event('submit'));
-      }
-      // Si es solo Enter sin Ctrl, permitir el salto de línea normal
-    });
+    const taskForm = document.getElementById("task-form");
+    const taskInput = document.getElementById("task-input");
+    const taskList = document.getElementById("task-list");
 
-    taskForm.addEventListener('submit', function(event) {
-      event.preventDefault();
-
-      const taskText = taskInput.value.trim();
-      if (taskText !== '') {
-        addTask(taskText);
-        saveTasks();  // Guardar después de agregar
-        taskInput.value = '';
+    // Enviar tarea a Firestore
+    taskForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = taskInput.value.trim();
+      if (text !== "") {
+        await addDoc(tareasRef, { text, status: "Pendiente" });
+        taskInput.value = "";
         taskInput.focus();
       }
     });
 
-    function addTask(text, status = 'Pendiente') {
-      const li = document.createElement('li');
+    // Escuchar cambios en tiempo real
+    onSnapshot(tareasRef, (snapshot) => {
+      taskList.innerHTML = "";
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        renderTask(docSnap.id, data.text, data.status);
+      });
+    });
+
+    // Renderizar tarea
+    function renderTask(id, text, status = "Pendiente") {
+      const li = document.createElement("li");
       li.className = "bg-white p-4 rounded shadow space-y-4";
 
-      const taskTop = document.createElement('div');
-      taskTop.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
+      const top = document.createElement("div");
+      top.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
 
-      const span = document.createElement('span');
-      // Preservar saltos de línea en el texto de la tarea
-      span.innerHTML = text.replace(/\n/g, '<br>');
+      const span = document.createElement("span");
+      span.innerHTML = text.replace(/\n/g, "<br>");
       span.className = "flex-1 font-semibold cursor-pointer";
 
-      span.addEventListener('click', function() {
-        span.classList.toggle('line-through');
-        span.classList.toggle('text-gray-400');
+      span.addEventListener("click", () => {
+        span.classList.toggle("line-through");
+        span.classList.toggle("text-gray-400");
       });
 
-      const select = document.createElement('select');
+      const select = document.createElement("select");
       select.className = "p-2 rounded border border-gray-300 focus:outline-none";
-
-      const options = ['Pendiente', 'Haciendo', 'Pausado', 'Terminado', 'Enviado'];
-      options.forEach(optionText => {
-        const option = document.createElement('option');
-        option.value = optionText;
-        option.textContent = optionText;
-        select.appendChild(option);
+      const estados = ["Pendiente", "Haciendo", "Pausado", "Terminado", "Enviado"];
+      estados.forEach((estado) => {
+        const opt = document.createElement("option");
+        opt.value = estado;
+        opt.textContent = estado;
+        select.appendChild(opt);
       });
-
       select.value = status;
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = 'Borrar';
-      deleteBtn.className = 'bg-red-500 hover:bg-red-600 text-white p-2 rounded transition';
-
-      deleteBtn.addEventListener('click', function(event) {
-        event.stopPropagation();
-        taskList.removeChild(li);
-        saveTasks();  // Guardar después de borrar
+      select.addEventListener("change", async () => {
+        await updateDoc(doc(db, "tareas", id), { status: select.value });
       });
 
-      const progressContainer = document.createElement('div');
+      const borrar = document.createElement("button");
+      borrar.textContent = "Borrar";
+      borrar.className = "bg-red-500 hover:bg-red-600 text-white p-2 rounded transition";
+      borrar.addEventListener("click", async () => {
+        await deleteDoc(doc(db, "tareas", id));
+      });
+
+      const progressContainer = document.createElement("div");
       progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
 
-      const progressBar = document.createElement('div');
-      progressBar.className = "h-full bg-gray-400 transition-all duration-500";
+      const progressBar = document.createElement("div");
+      progressBar.className = "h-full transition-all duration-500";
       progressContainer.appendChild(progressBar);
 
-      select.addEventListener('change', function() {
-        updateTaskProgress(progressBar, select.value);
-        saveTasks();  // Guardar cuando se cambia el estado
+      updateProgress(progressBar, status);
+
+      select.addEventListener("change", () => {
+        updateProgress(progressBar, select.value);
       });
 
-      updateTaskProgress(progressBar, status);
+      top.appendChild(span);
+      top.appendChild(select);
+      top.appendChild(borrar);
 
-      taskTop.appendChild(span);
-      taskTop.appendChild(select);
-      taskTop.appendChild(deleteBtn);
-
-      li.appendChild(taskTop);
+      li.appendChild(top);
       li.appendChild(progressContainer);
       taskList.appendChild(li);
     }
 
-    function updateTaskProgress(progressBar, status) {
-      switch(status) {
-        case 'Pendiente':
-          progressBar.style.width = '10%';
-          progressBar.className = 'h-full bg-gray-400 transition-all duration-500';
-          break;
-        case 'Haciendo':
-          progressBar.style.width = '50%';
-          progressBar.className = 'h-full bg-blue-500 transition-all duration-500';
-          break;
-        case 'Pausado':
-          progressBar.style.width = '50%';
-          progressBar.className = 'h-full bg-yellow-400 transition-all duration-500';
-          break;
-        case 'Terminado':
-          progressBar.style.width = '100%';
-          progressBar.className = 'h-full bg-green-500 transition-all duration-500';
-          break;
-        case 'Enviado':
-          progressBar.style.width = '100%';
-          progressBar.className = 'h-full bg-purple-500 transition-all duration-500';
-          break;
-      }
+    function updateProgress(bar, estado) {
+      const estilos = {
+        Pendiente: "w-[10%] bg-gray-400",
+        Haciendo: "w-[50%] bg-blue-500",
+        Pausado: "w-[50%] bg-yellow-400",
+        Terminado: "w-[100%] bg-green-500",
+        Enviado: "w-[100%] bg-purple-500"
+      };
+      bar.className = `h-full transition-all duration-500 ${estilos[estado] || "w-[10%] bg-gray-400"}`;
     }
-
-    // Cargar tareas guardadas al iniciar la página
-    loadTasks();
   </script>
-
 </body>
 </html>
