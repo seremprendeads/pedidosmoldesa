@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>To-Do List con Firestore</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>To-Do List con Barra de Progreso</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 min-h-screen flex flex-col">
 
   <header class="bg-blue-600 text-white py-6 text-center">
-    <h1 class="text-3xl font-bold">Pedidos 📦</h1>
+    <h1 class="text-3xl font-bold">Pedidos 📦​ </h1>
+   
   </header>
 
   <main class="flex-1 p-6 max-w-4xl mx-auto w-full">
-    <form id="task-form" class="flex flex-col sm:flex-row gap-4 mb-6" style="display: none;">
+    <form id="task-form" class="flex flex-col sm:flex-row gap-4 mb-6">
       <textarea
         id="task-input"
         placeholder="Escribe una tarea..."
@@ -30,163 +31,143 @@
     </form>
 
     <ul id="task-list" class="space-y-6">
-      <!-- Tareas se cargan aquí -->
+      <!-- Las tareas aparecerán aquí -->
     </ul>
-
-    <div id="auth-buttons" class="flex justify-center space-x-4 mt-6">
-      <button id="login-btn" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">Iniciar sesión</button>
-      <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded" style="display: none;">Cerrar sesión</button>
-    </div>
   </main>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  <script>
+    const taskForm = document.getElementById('task-form');
+    const taskInput = document.getElementById('task-input');
+    const taskList = document.getElementById('task-list');
 
-    // Configuración Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyC26tExI2Qzm_dczDvGRx58M_9b4qD3Ajw",
-      authDomain: "tareas-d2893.firebaseapp.com",
-      projectId: "tareas-d2893",
-      storageBucket: "tareas-d2893.firebasestorage.app",
-      messagingSenderId: "930777625775",
-      appId: "1:930777625775:web:347b4c3814d99d163ad05a",
-      measurementId: "G-N1WRTWBEBM"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const tareasRef = collection(db, "tareas");
-
-    const taskForm = document.getElementById("task-form");
-    const taskInput = document.getElementById("task-input");
-    const taskList = document.getElementById("task-list");
-    const loginBtn = document.getElementById("login-btn");
-    const logoutBtn = document.getElementById("logout-btn");
-
-    // Manejar el estado de la autenticación
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // Usuario autenticado
-        taskForm.style.display = "flex";  // Mostrar el formulario para agregar tareas
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-      } else {
-        // Usuario no autenticado
-        taskForm.style.display = "none";  // Ocultar el formulario para agregar tareas
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-      }
-    });
-
-    // Iniciar sesión anónimamente
-    loginBtn.addEventListener("click", () => {
-      signInAnonymously(auth).catch((error) => {
-        console.error("Error al iniciar sesión:", error);
-        });
-    });
-
-    // Cerrar sesión
-    logoutBtn.addEventListener("click", () => {
-      signOut(auth).catch((error) => {
-        console.error("Error al cerrar sesión:", error);
+    function saveTasks() {
+      const tasks = [];
+      document.querySelectorAll('#task-list li').forEach(li => {
+        const text = li.querySelector('span').textContent;
+        const status = li.querySelector('select').value;
+        tasks.push({ text, status });
       });
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+      const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+      tasks.forEach(task => addTask(task.text, task.status));
+    }
+
+    // Manejar el evento de teclas en el textarea
+    taskInput.addEventListener('keydown', function(event) {
+      // Si es Ctrl+Enter, enviar el formulario
+      if (event.key === 'Enter' && event.ctrlKey) {
+        event.preventDefault();
+        taskForm.dispatchEvent(new Event('submit'));
+      }
+      // Si es solo Enter sin Ctrl, permitir el salto de línea normal
     });
 
-    // Enviar tarea a Firestore
-    taskForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const text = taskInput.value.trim();
-      if (text !== "") {
-        await addDoc(tareasRef, { text, status: "Pendiente" });
-        taskInput.value = "";
+    taskForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const taskText = taskInput.value.trim();
+      if (taskText !== '') {
+        addTask(taskText);
+        saveTasks();  // Guardar después de agregar
+        taskInput.value = '';
         taskInput.focus();
       }
     });
 
-    // Escuchar cambios en tiempo real
-    onSnapshot(tareasRef, (snapshot) => {
-      taskList.innerHTML = "";
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        renderTask(docSnap.id, data.text, data.status);
+    function addTask(text, status = 'Pendiente') {
+      const li = document.createElement('li');
+      li.className = "bg-white p-4 rounded shadow space-y-4";
+
+      const taskTop = document.createElement('div');
+      taskTop.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
+
+      const span = document.createElement('span');
+      // Preservar saltos de línea en el texto de la tarea
+      span.innerHTML = text.replace(/\n/g, '<br>');
+      span.className = "flex-1 font-semibold cursor-pointer";
+
+      span.addEventListener('click', function() {
+        span.classList.toggle('line-through');
+        span.classList.toggle('text-gray-400');
       });
-    });
 
-    // Renderizar tarea
-function renderTask(id, text, status = "Pendiente") {
-  const li = document.createElement("li");
-  li.className = "bg-white p-4 rounded shadow space-y-4";
+      const select = document.createElement('select');
+      select.className = "p-2 rounded border border-gray-300 focus:outline-none";
 
-  const top = document.createElement("div");
-  top.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
+      const options = ['Pendiente', 'Haciendo', 'Pausado', 'Terminado', 'Enviado'];
+      options.forEach(optionText => {
+        const option = document.createElement('option');
+        option.value = optionText;
+        option.textContent = optionText;
+        select.appendChild(option);
+      });
 
-  const span = document.createElement("span");
-  span.innerHTML = (text || "").replace(/\n/g, "<br>"); // Aquí es donde aplicas la corrección
-  span.className = "flex-1 font-semibold cursor-pointer";
+      select.value = status;
 
-  span.addEventListener("click", () => {
-    span.classList.toggle("line-through");
-    span.classList.toggle("text-gray-400");
-  });
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Borrar';
+      deleteBtn.className = 'bg-red-500 hover:bg-red-600 text-white p-2 rounded transition';
 
-  const select = document.createElement("select");
-  select.className = "p-2 rounded border border-gray-300 focus:outline-none";
-  const estados = ["Pendiente", "Haciendo", "Pausado", "Terminado", "Enviado"];
-  estados.forEach((estado) => {
-    const opt = document.createElement("option");
-    opt.value = estado;
-    opt.textContent = estado;
-    select.appendChild(opt);
-  });
-  select.value = status;
+      deleteBtn.addEventListener('click', function(event) {
+        event.stopPropagation();
+        taskList.removeChild(li);
+        saveTasks();  // Guardar después de borrar
+      });
 
-  select.addEventListener("change", async () => {
-    await updateDoc(doc(db, "tareas", id), { status: select.value });
-  });
+      const progressContainer = document.createElement('div');
+      progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
 
-  const borrar = document.createElement("button");
-  borrar.textContent = "Borrar";
-  borrar.className = "bg-red-500 hover:bg-red-600 text-white p-2 rounded transition";
-  borrar.addEventListener("click", async () => {
-    await deleteDoc(doc(db, "tareas", id));
-  });
+      const progressBar = document.createElement('div');
+      progressBar.className = "h-full bg-gray-400 transition-all duration-500";
+      progressContainer.appendChild(progressBar);
 
-  const progressContainer = document.createElement("div");
-  progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
+      select.addEventListener('change', function() {
+        updateTaskProgress(progressBar, select.value);
+        saveTasks();  // Guardar cuando se cambia el estado
+      });
 
-  const progressBar = document.createElement("div");
-  progressBar.className = "h-full transition-all duration-500";
-  progressContainer.appendChild(progressBar);
+      updateTaskProgress(progressBar, status);
 
-  updateProgress(progressBar, status);
+      taskTop.appendChild(span);
+      taskTop.appendChild(select);
+      taskTop.appendChild(deleteBtn);
 
-  select.addEventListener("change", () => {
-    updateProgress(progressBar, select.value);
-  });
-
-  top.appendChild(span);
-  top.appendChild(select);
-  top.appendChild(borrar);
-
-  li.appendChild(top);
-  li.appendChild(progressContainer);
-  taskList.appendChild(li);
-}
-
-
-    function updateProgress(bar, estado) {
-      const estilos = {
-        Pendiente: "w-[10%] bg-gray-400",
-        Haciendo: "w-[50%] bg-blue-500",
-        Pausado: "w-[50%] bg-yellow-400",
-        Terminado: "w-[100%] bg-green-500",
-        Enviado: "w-[100%] bg-purple-500"
-      };
-      bar.className = `h-full transition-all duration-500 ${estilos[estado] || "w-[10%] bg-gray-400"}`;
+      li.appendChild(taskTop);
+      li.appendChild(progressContainer);
+      taskList.appendChild(li);
     }
+
+    function updateTaskProgress(progressBar, status) {
+      switch(status) {
+        case 'Pendiente':
+          progressBar.style.width = '10%';
+          progressBar.className = 'h-full bg-gray-400 transition-all duration-500';
+          break;
+        case 'Haciendo':
+          progressBar.style.width = '50%';
+          progressBar.className = 'h-full bg-blue-500 transition-all duration-500';
+          break;
+        case 'Pausado':
+          progressBar.style.width = '50%';
+          progressBar.className = 'h-full bg-yellow-400 transition-all duration-500';
+          break;
+        case 'Terminado':
+          progressBar.style.width = '100%';
+          progressBar.className = 'h-full bg-green-500 transition-all duration-500';
+          break;
+        case 'Enviado':
+          progressBar.style.width = '100%';
+          progressBar.className = 'h-full bg-purple-500 transition-all duration-500';
+          break;
+      }
+    }
+
+    // Cargar tareas guardadas al iniciar la página
+    loadTasks();
   </script>
+
 </body>
 </html>
