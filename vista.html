@@ -46,35 +46,77 @@
       });
     });
 
-    // Mostrar tareas en pantalla
-    function addTask(text, status) {
-      const li = document.createElement('li');
-      li.className = "bg-white p-4 rounded shadow space-y-4";
+function addTask(text, status = 'Pendiente') {
+  // Verificar que 'text' sea una cadena válida
+  if (typeof text !== 'string') {
+    text = 'Tarea sin descripción';  // Valor predeterminado si 'text' no es válido
+  }
 
-      const taskTop = document.createElement('div');
-      taskTop.className = "flex justify-between items-center";
+  const li = document.createElement('li');
+  li.className = "bg-white p-4 rounded shadow space-y-4";
 
-      const span = document.createElement('span');
-      span.innerHTML = text.replace(/\n/g, '<br>');
-      span.className = "flex-1 font-semibold";
+  const taskTop = document.createElement('div');
+  taskTop.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
 
-      const statusLabel = document.createElement('span');
-      statusLabel.textContent = status;
-      statusLabel.className = "ml-4 text-sm font-bold";
+  const span = document.createElement('span');
+  span.innerHTML = text.replace(/\n/g, '<br>'); // Aquí estamos reemplazando saltos de línea con <br>
+  span.className = "flex-1 font-semibold cursor-pointer";
 
-      const progressContainer = document.createElement('div');
-      progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
+  span.addEventListener('click', function() {
+    span.classList.toggle('line-through');
+    span.classList.toggle('text-gray-400');
+  });
 
-      const progressBar = document.createElement('div');
-      updateTaskProgress(progressBar, status);
-      progressContainer.appendChild(progressBar);
+  const select = document.createElement('select');
+  select.className = "p-2 rounded border border-gray-300 focus:outline-none";
 
-      taskTop.appendChild(span);
-      taskTop.appendChild(statusLabel);
-      li.appendChild(taskTop);
-      li.appendChild(progressContainer);
-      taskList.appendChild(li);
-    }
+  const options = ['Pendiente', 'Haciendo', 'Pausado', 'Terminado', 'Enviado'];
+  options.forEach(optionText => {
+    const option = document.createElement('option');
+    option.value = optionText;
+    option.textContent = optionText;
+    select.appendChild(option);
+  });
+
+  // Verifica que el 'status' sea uno de los valores válidos
+  if (!options.includes(status)) {
+    status = 'Pendiente'; // Si 'status' no es válido, asignamos el valor predeterminado
+  }
+
+  select.value = status;
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = 'Borrar';
+  deleteBtn.className = 'bg-red-500 hover:bg-red-600 text-white p-2 rounded transition';
+
+  deleteBtn.addEventListener('click', function(event) {
+    event.stopPropagation();
+    taskList.removeChild(li);
+    saveTasks();  // Guardar después de borrar
+  });
+
+  const progressContainer = document.createElement('div');
+  progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
+
+  const progressBar = document.createElement('div');
+  progressBar.className = "h-full bg-gray-400 transition-all duration-500";
+  progressContainer.appendChild(progressBar);
+
+  select.addEventListener('change', function() {
+    updateTaskProgress(progressBar, select.value);
+    saveTasks();  // Guardar cuando se cambia el estado
+  });
+
+  updateTaskProgress(progressBar, status);
+
+  taskTop.appendChild(span);
+  taskTop.appendChild(select);
+  taskTop.appendChild(deleteBtn);
+
+  li.appendChild(taskTop);
+  li.appendChild(progressContainer);
+  taskList.appendChild(li);
+}
 
     function updateTaskProgress(progressBar, status) {
       const styles = {
