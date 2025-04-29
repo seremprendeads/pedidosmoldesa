@@ -57,7 +57,7 @@
 
     // Escuchar tareas en tiempo real
     onSnapshot(collection(db, "tareas"), (snapshot) => {
-      taskList.innerHTML = "";
+      taskList.innerHTML = ""; // Limpiar lista antes de agregar nuevas tareas
       snapshot.forEach(docSnap => {
         const task = docSnap.data();
         addTask(docSnap.id, task.text, task.status);
@@ -73,7 +73,7 @@
           text: taskText,
           status: 'Pendiente'
         });
-        taskInput.value = '';
+        taskInput.value = '';  // Limpiar el input después de agregar
         taskInput.focus();
       }
     });
