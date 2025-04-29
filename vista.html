@@ -39,9 +39,11 @@
 
     // Escuchar tareas en tiempo real
     onSnapshot(collection(db, "tareas"), (snapshot) => {
+      console.log("Snapshot recibido:", snapshot); // Verificar si llegan datos
       taskList.innerHTML = "";
       snapshot.forEach(doc => {
         const task = doc.data();
+        console.log("Tarea:", task); // Verificar el contenido de cada tarea
         addTask(task.text, task.status);
       });
     });
