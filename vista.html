@@ -22,12 +22,12 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // ✅ Configuración corregida de Firebase
+    // ✅ Configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyC26tExI2Qzm_dczDvGRx58M_9b4qD3Ajw",
       authDomain: "tareas-d2893.firebaseapp.com",
       projectId: "tareas-d2893",
-      storageBucket: "tareas-d2893.appspot.com", // ← CORREGIDO
+      storageBucket: "tareas-d2893.appspot.com", 
       messagingSenderId: "930777625775",
       appId: "1:930777625775:web:347b4c3814d99d163ad05a",
       measurementId: "G-N1WRTWBEBM"
@@ -46,72 +46,49 @@
       });
     });
 
-function addTask(text, status = 'Pendiente') {
-  // Verificar que 'text' sea una cadena válida
-  if (typeof text !== 'string') {
-    text = 'Tarea sin descripción';  // Valor predeterminado si 'text' no es válido
-  }
+    function addTask(text, status = 'Pendiente') {
+      // Verificar que 'text' sea una cadena válida
+      if (typeof text !== 'string') {
+        text = 'Tarea sin descripción';  // Valor predeterminado si 'text' no es válido
+      }
 
-  const li = document.createElement('li');
-  li.className = "bg-white p-4 rounded shadow space-y-4";
+      const li = document.createElement('li');
+      li.className = "bg-white p-4 rounded shadow space-y-4";
 
-  const taskTop = document.createElement('div');
-  taskTop.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
+      const taskTop = document.createElement('div');
+      taskTop.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
 
-  const span = document.createElement('span');
-  span.innerHTML = text.replace(/\n/g, '<br>'); // Aquí estamos reemplazando saltos de línea con <br>
-  span.className = "flex-1 font-semibold cursor-pointer";
+      const span = document.createElement('span');
+      span.innerHTML = text.replace(/\n/g, '<br>'); // Aquí estamos reemplazando saltos de línea con <br>
+      span.className = "flex-1 font-semibold cursor-pointer";
 
-  span.addEventListener('click', function() {
-    span.classList.toggle('line-through');
-    span.classList.toggle('text-gray-400');
-  });
+      span.addEventListener('click', function() {
+        span.classList.toggle('line-through');
+        span.classList.toggle('text-gray-400');
+      });
 
-  // Eliminar el select para mostrar el estado como texto
-  const statusSpan = document.createElement('span');
-  statusSpan.textContent = status;
-  statusSpan.className = "font-semibold text-gray-600";  // Estilo para el estado de la tarea
+      // Mostrar el estado como texto
+      const statusSpan = document.createElement('span');
+      statusSpan.textContent = status;
+      statusSpan.className = "font-semibold text-gray-600";  // Estilo para el estado de la tarea
 
-  // Eliminamos el botón de eliminar
-  // const deleteBtn = document.createElement('button');
-  // deleteBtn.textContent = 'Borrar';
-  // deleteBtn.className = 'bg-red-500 hover:bg-red-600 text-white p-2 rounded transition';
-  // deleteBtn.addEventListener('click', function(event) {
-  //   event.stopPropagation();
-  //   taskList.removeChild(li);
-  //   saveTasks();  // Guardar después de borrar
-  // });
+      const progressContainer = document.createElement('div');
+      progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
 
-  const progressContainer = document.createElement('div');
-  progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
+      const progressBar = document.createElement('div');
+      progressBar.className = "h-full bg-gray-400 transition-all duration-500";
+      progressContainer.appendChild(progressBar);
 
-  const progressBar = document.createElement('div');
-  progressBar.className = "h-full bg-gray-400 transition-all duration-500";
-  progressContainer.appendChild(progressBar);
+      // Actualizamos el progreso en función del estado
+      updateTaskProgress(progressBar, status);
 
-  // Actualizamos el progreso en función del estado
-  updateTaskProgress(progressBar, status);
+      taskTop.appendChild(span);
+      taskTop.appendChild(statusSpan);  // Añadimos el estado como texto
 
-  taskTop.appendChild(span);
-  taskTop.appendChild(statusSpan);  // Añadimos el estado como texto
-  // taskTop.appendChild(deleteBtn);  // Ya no mostramos el botón de eliminar
-
-  li.appendChild(taskTop);
-  li.appendChild(progressContainer);
-  taskList.appendChild(li);
-}
-
-
-  updateTaskProgress(progressBar, status);
-
-  taskTop.appendChild(span);
-  taskTop.appendChild(select);
-  taskTop.appendChild(deleteBtn);
-
-  li.appendChild(taskTop);
-  li.appendChild(progressContainer);
-  taskList.appendChild(li);
-}
+      li.appendChild(taskTop);
+      li.appendChild(progressContainer);
+      taskList.appendChild(li);
+    }
 
     function updateTaskProgress(progressBar, status) {
       const styles = {
