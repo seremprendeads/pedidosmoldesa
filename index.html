@@ -49,6 +49,7 @@
       measurementId: "TU_MEASUREMENT_ID"
     };
 
+    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const taskList = document.getElementById('task-list');
@@ -69,12 +70,16 @@
       event.preventDefault();
       const taskText = taskInput.value.trim();
       if (taskText !== '') {
-        await addDoc(collection(db, "tareas"), {
-          text: taskText,
-          status: 'Pendiente'
-        });
-        taskInput.value = '';  // Limpiar el input después de agregar
-        taskInput.focus();
+        try {
+          await addDoc(collection(db, "tareas"), {
+            text: taskText,
+            status: 'Pendiente'
+          });
+          taskInput.value = '';  // Limpiar el input después de agregar
+          taskInput.focus();
+        } catch (error) {
+          console.error("Error al agregar tarea:", error);
+        }
       }
     });
 
@@ -102,9 +107,13 @@
       select.value = status;
 
       select.addEventListener('change', async function() {
-        await updateDoc(doc(db, "tareas", id), {
-          status: select.value
-        });
+        try {
+          await updateDoc(doc(db, "tareas", id), {
+            status: select.value
+          });
+        } catch (error) {
+          console.error("Error al actualizar tarea:", error);
+        }
       });
 
       const deleteBtn = document.createElement('button');
@@ -113,7 +122,11 @@
 
       deleteBtn.addEventListener('click', async function(event) {
         event.stopPropagation();
-        await deleteDoc(doc(db, "tareas", id));
+        try {
+          await deleteDoc(doc(db, "tareas", id));
+        } catch (error) {
+          console.error("Error al eliminar tarea:", error);
+        }
       });
 
       const progressContainer = document.createElement('div');
