@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Vista de Tareas - Jefe</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -18,17 +18,35 @@
     </ul>
   </main>
 
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-  <script>
+    // Configuración de Firebase (ya tenés estos datos)
+    const firebaseConfig = {
+      apiKey: "AIzaSyC26tExI2Qzm_dczDvGRx58M_9b4qD3Ajw",
+      authDomain: "tareas-d2893.firebaseapp.com",
+      projectId: "tareas-d2893",
+      storageBucket: "tareas-d2893.firebasestorage.app",
+      messagingSenderId: "930777625775",
+      appId: "1:930777625775:web:347b4c3814d99d163ad05a",
+      measurementId: "G-N1WRTWBEBM"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
     const taskList = document.getElementById('task-list');
 
-    function loadTasks() {
-      const saved = localStorage.getItem('tasks');
-      if (saved) {
-        JSON.parse(saved).forEach(task => addTask(task.text, task.status));
-      }
-    }
+    // Escuchar tareas en tiempo real
+    onSnapshot(collection(db, "tareas"), (snapshot) => {
+      taskList.innerHTML = "";
+      snapshot.forEach(doc => {
+        const task = doc.data();
+        addTask(task.text, task.status);
+      });
+    });
 
+    // Mostrar tareas en pantalla
     function addTask(text, status) {
       const li = document.createElement('li');
       li.className = "bg-white p-4 rounded shadow space-y-4";
@@ -37,7 +55,6 @@
       taskTop.className = "flex justify-between items-center";
 
       const span = document.createElement('span');
-      // Preservar saltos de línea en el texto de la tarea
       span.innerHTML = text.replace(/\n/g, '<br>');
       span.className = "flex-1 font-semibold";
 
@@ -55,40 +72,21 @@
 
       taskTop.appendChild(span);
       taskTop.appendChild(statusLabel);
-
       li.appendChild(taskTop);
       li.appendChild(progressContainer);
       taskList.appendChild(li);
     }
 
     function updateTaskProgress(progressBar, status) {
-      switch(status) {
-        case 'Pendiente':
-          progressBar.style.width = '10%';
-          progressBar.className += ' bg-gray-400';
-          break;
-        case 'Haciendo':
-          progressBar.style.width = '50%';
-          progressBar.className += ' bg-blue-500';
-          break;
-        case 'Pausado':
-          progressBar.style.width = '50%';
-          progressBar.className += ' bg-yellow-400';
-          break;
-        case 'Terminado':
-          progressBar.style.width = '100%';
-          progressBar.className += ' bg-green-500';
-          break;
-        case 'Enviado':
-          progressBar.style.width = '100%';
-          progressBar.className += ' bg-purple-500';
-          break;
-      }
+      const styles = {
+        Pendiente: "w-[10%] bg-gray-400",
+        Haciendo: "w-[50%] bg-blue-500",
+        Pausado: "w-[50%] bg-yellow-400",
+        Terminado: "w-[100%] bg-green-500",
+        Enviado: "w-[100%] bg-purple-500"
+      };
+      progressBar.className = `h-full transition-all duration-500 ${styles[status] || 'w-[10%] bg-gray-400'}`;
     }
-
-    loadTasks();
   </script>
-
-
 </body>
 </html>
