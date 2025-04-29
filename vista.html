@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -39,7 +38,8 @@
       taskTop.className = "flex justify-between items-center";
 
       const span = document.createElement('span');
-      span.textContent = text;
+      // Preservar saltos de línea en el texto de la tarea
+      span.innerHTML = text.replace(/\n/g, '<br>');
       span.className = "flex-1 font-semibold";
 
       const statusLabel = document.createElement('span');
@@ -79,6 +79,10 @@
         case 'Terminado':
           progressBar.style.width = '100%';
           progressBar.className += ' bg-green-500';
+          break;
+        case 'Enviado':
+          progressBar.style.width = '100%';
+          progressBar.className += ' bg-purple-500';
           break;
       }
     }
