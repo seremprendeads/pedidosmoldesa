@@ -97,7 +97,7 @@
       const select = document.createElement('select');
       select.className = "p-2 rounded border border-gray-300 focus:outline-none";
 
-      const options = ['Pendiente', 'Haciendo', 'Pausado', 'Terminado'];
+      const options = ['Pendiente', 'Haciendo', 'Pausado', 'Terminado', 'Enviado'];
       options.forEach(optionText => {
         const option = document.createElement('option');
         option.value = optionText;
@@ -157,6 +157,10 @@
         case 'Terminado':
           progressBar.style.width = '100%';
           progressBar.className = 'h-full bg-green-500 transition-all duration-500';
+          break;
+        case 'Enviado':
+          progressBar.style.width = '100%';
+          progressBar.className = 'h-full bg-purple-500 transition-all duration-500';
           break;
       }
     }
