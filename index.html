@@ -13,7 +13,7 @@
   </header>
 
   <main class="flex-1 p-6 max-w-4xl mx-auto w-full">
-    <form id="task-form" class="flex flex-col sm:flex-row gap-4 mb-6">
+    <form id="task-form" class="flex flex-col sm:flex-row gap-4 mb-6" style="display: none;">
       <textarea
         id="task-input"
         placeholder="Escribe una tarea..."
@@ -32,11 +32,17 @@
     <ul id="task-list" class="space-y-6">
       <!-- Tareas se cargan aquí -->
     </ul>
+
+    <div id="auth-buttons" class="flex justify-center space-x-4 mt-6">
+      <button id="login-btn" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">Iniciar sesión</button>
+      <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded" style="display: none;">Cerrar sesión</button>
+    </div>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
     // Configuración Firebase
     const firebaseConfig = {
@@ -51,11 +57,43 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
     const tareasRef = collection(db, "tareas");
 
     const taskForm = document.getElementById("task-form");
     const taskInput = document.getElementById("task-input");
     const taskList = document.getElementById("task-list");
+    const loginBtn = document.getElementById("login-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+
+    // Manejar el estado de la autenticación
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Usuario autenticado
+        taskForm.style.display = "flex";  // Mostrar el formulario para agregar tareas
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+      } else {
+        // Usuario no autenticado
+        taskForm.style.display = "none";  // Ocultar el formulario para agregar tareas
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+      }
+    });
+
+    // Iniciar sesión anónimamente
+    loginBtn.addEventListener("click", () => {
+      signInAnonymously(auth).catch((error) => {
+        console.error("Error al iniciar sesión:", error);
+      });
+    });
+
+    // Cerrar sesión
+    logoutBtn.addEventListener("click", () => {
+      signOut(auth).catch((error) => {
+        console.error("Error al cerrar sesión:", error);
+      });
+    });
 
     // Enviar tarea a Firestore
     taskForm.addEventListener("submit", async (e) => {
