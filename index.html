@@ -73,18 +73,22 @@
       });
 
       // Agregar tarea
-      taskForm.addEventListener('submit', async (e) => {
+       taskForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const text = taskInput.value.trim();
         if (text !== "") {
-          await addDoc(collection(db, "tareas"), {
-            text,
-            status: "Pendiente"
-          });
-          taskInput.value = "";
+          try {
+            await addDoc(collection(db, "tareas"), {
+              text,
+              status: "Pendiente"
+            });
+            taskInput.value = ""; // Limpiar el campo de entrada
+          } catch (error) {
+            console.error("Error al agregar tarea:", error);
+          }
         }
       });
-    });
+
 
     function addTask(id, text, status = "Pendiente") {
       const li = document.createElement("li");
@@ -108,17 +112,27 @@
       select.value = status;
       select.className = "p-2 rounded border border-gray-300";
 
-      select.addEventListener("change", async () => {
-        await updateDoc(doc(db, "tareas", id), {
-          status: select.value
-        });
+            select.addEventListener("change", async () => {
+        try {
+          await updateDoc(doc(db, "tareas", id), {
+            status: select.value
+          });
+          updateProgressBar(progressBar, select.value);
+        } catch (error) {
+          console.error("Error al actualizar estado:", error);
+        }
       });
+
 
       const deleteBtn = document.createElement("button");
       deleteBtn.textContent = "Borrar";
       deleteBtn.className = "bg-red-500 hover:bg-red-600 text-white p-2 rounded";
-      deleteBtn.addEventListener("click", async () => {
-        await deleteDoc(doc(db, "tareas", id));
+           deleteBtn.addEventListener("click", async () => {
+        try {
+          await deleteDoc(doc(db, "tareas", id));
+        } catch (error) {
+          console.error("Error al eliminar tarea:", error);
+        }
       });
 
       const progressContainer = document.createElement("div");
