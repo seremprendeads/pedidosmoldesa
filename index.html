@@ -4,55 +4,43 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Lista de Tareas</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+
+  <!-- Firebase SDKs versión compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+  <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 p-6">
 
   <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
     <h1 class="text-2xl font-bold mb-4">Mis Tareas</h1>
-
-    <ul id="task-list" class="space-y-4">
-      <!-- Aquí se cargarán las tareas desde Firestore -->
-    </ul>
+    <ul id="task-list" class="space-y-4"></ul>
   </div>
 
   <script>
-    // Configuración de Firebase
-   // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+    // Configuración de Firebase (tus datos reales)
+    const firebaseConfig = {
+      apiKey: "AIzaSyC26tExI2Qzm_dczDvGRx58M_9b4qD3Ajw",
+      authDomain: "tareas-d2893.firebaseapp.com",
+      projectId: "tareas-d2893",
+      storageBucket: "tareas-d2893.appspot.com",
+      messagingSenderId: "930777625775",
+      appId: "1:930777625775:web:347b4c3814d99d163ad05a",
+      measurementId: "G-N1WRTWBEBM"
+    };
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyC26tExI2Qzm_dczDvGRx58M_9b4qD3Ajw",
-  authDomain: "tareas-d2893.firebaseapp.com",
-  projectId: "tareas-d2893",
-  storageBucket: "tareas-d2893.firebasestorage.app",
-  messagingSenderId: "930777625775",
-  appId: "1:930777625775:web:347b4c3814d99d163ad05a",
-  measurementId: "G-N1WRTWBEBM"
-};
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-    // Función para agregar tareas al HTML
+    // Función para agregar tarea al HTML
     function addTask(data, id) {
-      console.log("data:", data);  // Mostrar en consola qué datos estamos recibiendo
-
       if (!data || !data.title) {
-        console.warn("El documento no tiene título:", data);
+        console.warn("Tarea sin título:", data);
         return;
       }
-
-      const title = data.title.replace(/\s/g, "-");
 
       const html = `
         <li class="task-item" data-id="${id}">
@@ -65,28 +53,22 @@ const analytics = getAnalytics(app);
           </div>
         </li>
       `;
-
-      const list = document.querySelector("#task-list");
-      if (list) {
-        list.innerHTML += html;
-      } else {
-        console.error("No se encontró el elemento con id #task-list");
-      }
+      document.getElementById("task-list").innerHTML += html;
     }
 
-    // Función para eliminar una tarea (desde Firestore y la interfaz)
+    // Función para eliminar tarea
     function deleteTask(id) {
       db.collection("tasks").doc(id).delete().then(() => {
-        const task = document.querySelector(`[data-id='${id}']`);
-        if (task) task.remove();
-        console.log("Tarea eliminada con ID:", id);
+        const item = document.querySelector(`[data-id='${id}']`);
+        if (item) item.remove();
+        console.log("Tarea eliminada:", id);
       }).catch(error => console.error("Error eliminando tarea:", error));
     }
 
-    // Escuchar cambios en la colección 'tasks'
+    // Escuchar en tiempo real
     db.collection("tasks").onSnapshot(snapshot => {
-      const list = document.querySelector("#task-list");
-      list.innerHTML = "";  // Limpiar antes de renderizar
+      const list = document.getElementById("task-list");
+      list.innerHTML = "";
       snapshot.forEach(doc => {
         addTask(doc.data(), doc.id);
       });
