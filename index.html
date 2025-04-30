@@ -2,166 +2,86 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pedidos 📦</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lista de Tareas</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-900 min-h-screen flex flex-col">
+<body class="bg-gray-100 p-6">
 
-  <header class="bg-blue-600 text-white py-6 text-center">
-    <h1 class="text-3xl font-bold">Pedidos 📦</h1>
-  </header>
+  <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">Mis Tareas</h1>
 
-  <main class="flex-1 p-6 max-w-4xl mx-auto w-full">
-    <form id="task-form" class="flex flex-col sm:flex-row gap-4 mb-6">
-      <textarea
-        id="task-input"
-        placeholder="Escribe un pedido o tarea..."
-        required
-        class="flex-1 p-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y"
-        rows="2"
-      ></textarea>
-      <button
-        type="submit"
-        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold p-3 rounded transition self-start"
-      >
-        Agregar
-      </button>
-    </form>
-
-    <ul id="task-list" class="space-y-6">
-      <!-- Las tareas aparecerán aquí -->
+    <ul id="task-list" class="space-y-4">
+      <!-- Aquí se cargarán las tareas desde Firestore -->
     </ul>
-  </main>
+  </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
+  <script>
+    // Configuración de Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyC26tExI2Qzm_dczDvGRx58M_9b4qD3Ajw",
-      authDomain: "tareas-d2893.firebaseapp.com",
-      projectId: "tareas-d2893",
-      storageBucket: "tareas-d2893.appspot.com",
-      messagingSenderId: "930777625775",
-      appId: "1:930777625775:web:347b4c3814d99d163ad05a",
-      measurementId: "G-N1WRTWBEBM"
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_BUCKET",
+      messagingSenderId: "TU_SENDER_ID",
+      appId: "TU_APP_ID"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    const taskForm = document.getElementById('task-form');
-    const taskInput = document.getElementById('task-input');
-    const taskList = document.getElementById('task-list');
+    // Función para agregar tareas al HTML
+    function addTask(data, id) {
+      console.log("data:", data);  // Mostrar en consola qué datos estamos recibiendo
 
-    onAuthStateChanged(auth, user => {
-      if (!user) {
-        window.location.href = "login.html"; // Redirigir si no está logueado
+      if (!data || !data.title) {
+        console.warn("El documento no tiene título:", data);
         return;
       }
 
-      // Escuchar cambios en tiempo real
-      onSnapshot(collection(db, "tareas"), (snapshot) => {
-        taskList.innerHTML = "";
-        snapshot.forEach(docSnap => {
-          const task = docSnap.data();
-          addTask(docSnap.id, task.text, task.status);
-        });
-      });
+      const title = data.title.replace(/\s/g, "-");
 
-      // Agregar tarea
-      taskForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const text = taskInput.value.trim();
-        if (text !== "") {
-          try {
-            await addDoc(collection(db, "tareas"), {
-              text,
-              status: "Pendiente"
-            });
-            taskInput.value = ""; // Limpiar el campo de entrada
-          } catch (error) {
-            console.error("Error al agregar tarea:", error);
-          }
-        }
-      });
+      const html = `
+        <li class="task-item" data-id="${id}">
+          <div class="flex justify-between items-center bg-gray-50 p-4 rounded shadow">
+            <div>
+              <h3 class="text-lg font-semibold">${data.title}</h3>
+              <p class="text-gray-600">${data.description || "Sin descripción"}</p>
+            </div>
+            <button onclick="deleteTask('${id}')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Eliminar</button>
+          </div>
+        </li>
+      `;
 
-      function addTask(id, text, status = "Pendiente") {
-        const li = document.createElement("li");
-        li.className = "bg-white p-4 rounded shadow space-y-4";
-
-        const taskTop = document.createElement("div");
-        taskTop.className = "flex flex-col sm:flex-row justify-between items-center gap-4";
-
-        const span = document.createElement("span");
-        span.innerHTML = text.replace(/\n/g, "<br>");
-        span.className = "flex-1 font-semibold";
-
-        const select = document.createElement("select");
-        const options = ["Pendiente", "Haciendo", "Pausado", "Terminado", "Enviado"];
-        options.forEach(opt => {
-          const o = document.createElement("option");
-          o.value = opt;
-          o.textContent = opt;
-          select.appendChild(o);
-        });
-        select.value = status;
-        select.className = "p-2 rounded border border-gray-300";
-
-        select.addEventListener("change", async () => {
-          try {
-            await updateDoc(doc(db, "tareas", id), {
-              status: select.value
-            });
-            updateProgressBar(progressBar, select.value);
-          } catch (error) {
-            console.error("Error al actualizar estado:", error);
-          }
-        });
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "Borrar";
-        deleteBtn.className = "bg-red-500 hover:bg-red-600 text-white p-2 rounded";
-        deleteBtn.addEventListener("click", async () => {
-          try {
-            await deleteDoc(doc(db, "tareas", id));
-          } catch (error) {
-            console.error("Error al eliminar tarea:", error);
-          }
-        });
-
-        const progressContainer = document.createElement("div");
-        progressContainer.className = "w-full h-4 bg-gray-200 rounded overflow-hidden";
-
-        const progressBar = document.createElement("div");
-        progressBar.className = "h-full transition-all duration-500";
-        progressContainer.appendChild(progressBar);
-
-        updateProgressBar(progressBar, status);
-
-        taskTop.appendChild(span);
-        taskTop.appendChild(select);
-        taskTop.appendChild(deleteBtn);
-
-        li.appendChild(taskTop);
-        li.appendChild(progressContainer);
-        taskList.appendChild(li);
+      const list = document.querySelector("#task-list");
+      if (list) {
+        list.innerHTML += html;
+      } else {
+        console.error("No se encontró el elemento con id #task-list");
       }
+    }
 
-      function updateProgressBar(bar, status) {
-        const styles = {
-          Pendiente: "w-[10%] bg-gray-400",
-          Haciendo: "w-[50%] bg-blue-500",
-          Pausado: "w-[50%] bg-yellow-400",
-          Terminado: "w-[100%] bg-green-500",
-          Enviado: "w-[100%] bg-purple-500"
-        };
-        bar.className = `h-full transition-all duration-500 ${styles[status] || "w-[10%] bg-gray-400"}`;
-      }
-    }); // <- Esta llave faltaba
-  </script> <!-- <- Este cierre de script también faltaba -->
+    // Función para eliminar una tarea (desde Firestore y la interfaz)
+    function deleteTask(id) {
+      db.collection("tasks").doc(id).delete().then(() => {
+        const task = document.querySelector(`[data-id='${id}']`);
+        if (task) task.remove();
+        console.log("Tarea eliminada con ID:", id);
+      }).catch(error => console.error("Error eliminando tarea:", error));
+    }
+
+    // Escuchar cambios en la colección 'tasks'
+    db.collection("tasks").onSnapshot(snapshot => {
+      const list = document.querySelector("#task-list");
+      list.innerHTML = "";  // Limpiar antes de renderizar
+      snapshot.forEach(doc => {
+        addTask(doc.data(), doc.id);
+      });
+    });
+  </script>
 </body>
 </html>
