@@ -30,7 +30,7 @@
     </form>
 
     <ul id="task-list" class="space-y-6">
-      <!-- Las tareas aparecerán aquí -->
+      <!-- Las tareas se mostrarán aquí -->
     </ul>
   </main>
 
@@ -59,11 +59,11 @@
 
     onAuthStateChanged(auth, user => {
       if (!user) {
-        window.location.href = "login.html"; // Redirigir si no está logueado
+        window.location.href = "login.html";
         return;
       }
 
-      // Escuchar cambios en tiempo real
+      // Escucha cambios en tiempo real
       onSnapshot(collection(db, "tareas"), (snapshot) => {
         taskList.innerHTML = "";
         snapshot.forEach(docSnap => {
@@ -72,8 +72,8 @@
         });
       });
 
-      // Agregar tarea
-      taskForm.addEventListener('submit', async (e) => {
+      // Envío del formulario
+      taskForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const text = taskInput.value.trim();
         if (text !== "") {
@@ -82,7 +82,7 @@
               text,
               status: "Pendiente"
             });
-            taskInput.value = ""; // Limpiar el campo de entrada
+            taskInput.value = "";
           } catch (error) {
             console.error("Error al agregar tarea:", error);
           }
@@ -103,10 +103,10 @@
         const select = document.createElement("select");
         const options = ["Pendiente", "Haciendo", "Pausado", "Terminado", "Enviado"];
         options.forEach(opt => {
-          const o = document.createElement("option");
-          o.value = opt;
-          o.textContent = opt;
-          select.appendChild(o);
+          const option = document.createElement("option");
+          option.value = opt;
+          option.textContent = opt;
+          select.appendChild(option);
         });
         select.value = status;
         select.className = "p-2 rounded border border-gray-300";
@@ -161,7 +161,9 @@
         };
         bar.className = `h-full transition-all duration-500 ${styles[status] || "w-[10%] bg-gray-400"}`;
       }
-    });
+
+    }); // <- cierre correcto de onAuthStateChanged
+
   </script>
 </body>
 </html>
