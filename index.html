@@ -37,54 +37,57 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    // Configuración de Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyC26tExI2Qzm_dczDvGRx58M_9b4qD3Ajw",
-  authDomain: "tareas-d2893.firebaseapp.com",
-  projectId: "tareas-d2893",
-  storageBucket: "tareas-d2893.firebasestorage.app",
-  messagingSenderId: "930777625775",
-  appId: "1:930777625775:web:347b4c3814d99d163ad05a",
-  measurementId: "G-N1WRTWBEBM"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyC26tExI2Qzm_dczDvGRx58M_9b4qD3Ajw",
+      authDomain: "tareas-d2893.firebaseapp.com",
+      projectId: "tareas-d2893",
+      storageBucket: "tareas-d2893.appspot.com",
+      messagingSenderId: "930777625775",
+      appId: "1:930777625775:web:347b4c3814d99d163ad05a",
+      measurementId: "G-N1WRTWBEBM"
+    };
 
-    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const taskList = document.getElementById('task-list');
+    const auth = getAuth(app);
+
     const taskForm = document.getElementById('task-form');
     const taskInput = document.getElementById('task-input');
+    const taskList = document.getElementById('task-list');
 
-    // Escuchar tareas en tiempo real
-    onSnapshot(collection(db, "tareas"), (snapshot) => {
-      taskList.innerHTML = ""; // Limpiar lista antes de agregar nuevas tareas
-      snapshot.forEach(docSnap => {
-        const task = docSnap.data();
-        addTask(docSnap.id, task.text, task.status);
-      });
-    });
-
-    // Agregar nueva tarea
-    taskForm.addEventListener('submit', async function(event) {
-      event.preventDefault();
-      const taskText = taskInput.value.trim();
-      if (taskText !== '') {
-        try {
-          await addDoc(collection(db, "tareas"), {
-            text: taskText,
-            status: 'Pendiente'
+    // Esperar a que el usuario esté autenticado
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        // Escuchar tareas en Firestore
+        onSnapshot(collection(db, "tareas"), (snapshot) => {
+          taskList.innerHTML = "";
+          snapshot.forEach(docSnap => {
+            const task = docSnap.data();
+            addTask(docSnap.id, task.text, task.status);
           });
-          taskInput.value = '';  // Limpiar el input después de agregar
-          taskInput.focus();
-        } catch (error) {
-          console.error("Error al agregar tarea:", error);
-        }
+        });
+
+        // Agregar nueva tarea a Firebase
+        taskForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const text = taskInput.value.trim();
+          if (text) {
+            await addDoc(collection(db, "tareas"), {
+              text,
+              status: 'Pendiente'
+            });
+            taskInput.value = '';
+            taskInput.focus();
+          }
+        });
+      } else {
+        window.location.href = "login.html";
       }
     });
 
-    // Mostrar tarea en pantalla
-    function addTask(id, text, status) {
+    function addTask(id, text, status = 'Pendiente') {
       const li = document.createElement('li');
       li.className = "bg-white p-4 rounded shadow space-y-4";
 
@@ -107,13 +110,9 @@ const firebaseConfig = {
       select.value = status;
 
       select.addEventListener('change', async function() {
-        try {
-          await updateDoc(doc(db, "tareas", id), {
-            status: select.value
-          });
-        } catch (error) {
-          console.error("Error al actualizar tarea:", error);
-        }
+        await updateDoc(doc(db, "tareas", id), {
+          status: select.value
+        });
       });
 
       const deleteBtn = document.createElement('button');
@@ -122,11 +121,7 @@ const firebaseConfig = {
 
       deleteBtn.addEventListener('click', async function(event) {
         event.stopPropagation();
-        try {
-          await deleteDoc(doc(db, "tareas", id));
-        } catch (error) {
-          console.error("Error al eliminar tarea:", error);
-        }
+        await deleteDoc(doc(db, "tareas", id));
       });
 
       const progressContainer = document.createElement('div');
@@ -146,7 +141,7 @@ const firebaseConfig = {
       taskList.appendChild(li);
     }
 
-    function updateTaskProgress(progressBar, status) {
+    function updateTaskProgress(bar, status) {
       const styles = {
         Pendiente: "w-[10%] bg-gray-400",
         Haciendo: "w-[50%] bg-blue-500",
@@ -154,7 +149,7 @@ const firebaseConfig = {
         Terminado: "w-[100%] bg-green-500",
         Enviado: "w-[100%] bg-purple-500"
       };
-      progressBar.className = `h-full transition-all duration-500 ${styles[status] || 'w-[10%] bg-gray-400'}`;
+      bar.className = `h-full transition-all duration-500 ${styles[status] || 'w-[10%] bg-gray-400'}`;
     }
   </script>
 </body>
